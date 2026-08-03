@@ -1,31 +1,31 @@
+#include "session.hpp"
+
 #include <iostream>
-
-#include <boost/asio.hpp>
-
-namespace fstcp {
-    namespace asio = boost::asio;
-    using asio::ip::tcp;
-}
 
 using namespace fstcp;
 
 namespace {
     void do_accept(tcp::acceptor &acceptor) {
-        //TODO
+        acceptor.async_accept([&acceptor](boost::system::error_code ec, tcp::socket socket) {
+            if (!ec) {
+                std::make_shared<Session>(std::move(socket))->start();
+            }
+            do_accept(acceptor);
+        });
     }
 
     unsigned short parse_port(const char *arg) {
-        int value = std::stoi(arg);
-        if (value <= 0 || value > 65535) {
+        int port = std::stoi(arg);
+        if (port <= 0 || port > 65535) {
             throw std::out_of_range("Port is out of range");
         }
-        return static_cast<unsigned short>(value);
+        return static_cast<unsigned short>(port);
     }
 }
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        std::cerr << "Использование: " << argv[0] << " <port>\n";
+        std::cerr << "Использование: " << argv[0] << " <порт>" << std::endl;
         return 1;
     }
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     try {
         port = parse_port(argv[1]);
     } catch (const std::exception&) {
-        std::cerr << "Некорректный номер порта: " << argv[1] << "\n";
+        std::cerr << "Некорректный номер порта: " << argv[1] << std::endl;
         return 1;
     }
 

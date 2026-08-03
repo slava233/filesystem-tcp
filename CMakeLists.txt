@@ -9,6 +9,7 @@ find_package(Threads REQUIRED)
 
 add_executable(fs
         src/main.cpp
+        src/session.cpp
 )
 
 target_include_directories(fs PRIVATE src)
