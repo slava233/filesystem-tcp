@@ -35,6 +35,8 @@ namespace fstcp {
 
         void pwd();
         void ls();
+        void cd(const std::string &path);
+        void more(const std::string &filename);
 
     public:
         explicit Session(tcp::socket socket);

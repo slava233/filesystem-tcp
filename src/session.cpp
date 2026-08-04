@@ -90,16 +90,14 @@ namespace fstcp {
         auto [cmd_raw, rest] = split_command(line);
         std::string cmd = to_lower(cmd_raw);
 
-        //TODO commands handlers
-
         if (cmd == "pwd") {
             pwd();
         } else if (cmd == "ls") {
             ls();
         } else if (cmd == "cd") {
-            ;
+            cd(rest);
         } else if (cmd == "more") {
-            ;
+            more(rest);
         } else if (cmd == "exit") {
             closing_ = true;
         } else {
@@ -140,6 +138,46 @@ namespace fstcp {
         }
 
         queue_write(out);
+    }
+
+    void Session::cd(const std::string &path) {
+        if (path.empty()) {
+            queue_write("cd: не указан путь\n");
+            return;
+        }
+
+        fs::path target = current_dir_ / path;
+
+        std::error_code ec;
+        fs::path new_path = fs::weakly_canonical(target, ec);
+        if (ec) {
+            queue_write("cd: нет такой директории\n");
+            return;
+        }
+
+        if (!fs::is_directory(new_path, ec) || ec) {
+            queue_write("cd: нет такой директории\n");
+            return;
+        }
+
+        current_dir_ = new_path;
+    }
+
+    void Session::more(const std::string &filename) {
+        if (filename.empty()) {
+            queue_write("more: не указан путь\n");
+            return;
+        }
+
+        fs::path target = current_dir_ / filename;
+
+        std::error_code ec;
+        if (!fs::is_regular_file(target, ec) || ec) {
+            queue_write("more: файл не найден\n");
+            return;
+        }
+
+        //TODO file view mode
     }
 
     void Session::start() {
