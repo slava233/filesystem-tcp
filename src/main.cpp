@@ -17,7 +17,7 @@ namespace {
     unsigned short parse_port(const char *arg) {
         int port = std::stoi(arg);
         if (port <= 0 || port > 65535) {
-            throw std::out_of_range("Port is out of range");
+            throw std::out_of_range("Порт не в диапазоне");
         }
         return static_cast<unsigned short>(port);
     }

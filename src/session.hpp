@@ -4,7 +4,6 @@
 
 #include <deque>
 #include <filesystem>
-#include <fstream>
 
 namespace fstcp {
     namespace fs = std::filesystem;
@@ -14,7 +13,7 @@ namespace fstcp {
     class Session : public std::enable_shared_from_this<Session> {
     private:
         tcp::socket socket_;
-        asio::streambuf input_buffer_;
+        asio::streambuf stream_buffer_;
 
         std::deque<std::string> write_queue_;
         bool writing_ = false;
@@ -23,6 +22,8 @@ namespace fstcp {
 
         bool closing_ = false;
 
+        bool in_file_view_ = false;
+
         void do_read();
         void on_read(const boost::system::error_code &ec, std::size_t bytes_transferred);
         void queue_write(std::string message);
@@ -30,6 +31,7 @@ namespace fstcp {
         void close();
 
         void handle_line(std::string line);
+        void handle_command(const std::string &line);
 
     public:
         explicit Session(tcp::socket socket);

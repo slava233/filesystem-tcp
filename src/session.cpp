@@ -1,4 +1,5 @@
 #include "session.hpp"
+#include "helpers.hpp"
 
 namespace fstcp {
     Session::Session(tcp::socket socket) : socket_(std::move(socket)) {}
@@ -6,19 +7,19 @@ namespace fstcp {
     void Session::do_read() {
         auto self = shared_from_this();
         asio::async_read_until(
-            socket_, input_buffer_, '\n',
+            socket_, stream_buffer_, '\n',
             [this, self](const boost::system::error_code &ec, std::size_t bytes_transferred) {
                 on_read(ec, bytes_transferred);
             });
     }
 
-    void Session::on_read(const boost::system::error_code &ec, std::size_t) {
+    void Session::on_read(const boost::system::error_code &ec, std::size_t bytes_transferred) {
         if (ec) {
             close();
             return;
         }
 
-        std::istream is(&input_buffer_);
+        std::istream is(&stream_buffer_);
         std::string line;
         std::getline(is, line);
 
@@ -42,6 +43,7 @@ namespace fstcp {
         }
 
         write_queue_.push_back(std::move(message));
+
         do_write();
     }
 
@@ -73,7 +75,36 @@ namespace fstcp {
     }
 
     void Session::handle_line(std::string line) {
-        //TODO
+        //TODO file view mode
+
+        std::string trimmed = trim(line);
+
+        if (trimmed.empty()) {
+            return;
+        }
+
+        handle_command(trimmed);
+    }
+
+    void Session::handle_command(const std::string &line) {
+        auto [cmd_raw, rest] = split_command(line);
+        std::string cmd = to_lower(cmd_raw);
+
+        //TODO commands handlers
+
+        if (cmd == "pwd") {
+            ;
+        } else if (cmd == "ls") {
+            ;
+        } else if (cmd == "cd") {
+            ;
+        } else if (cmd == "more") {
+            ;
+        } else if (cmd == "exit") {
+            closing_ = true;
+        } else {
+            queue_write("Hеизвестная команда\n");
+        }
     }
 
     void Session::start() {
