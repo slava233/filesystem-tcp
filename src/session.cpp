@@ -13,7 +13,7 @@ namespace fstcp {
             });
     }
 
-    void Session::on_read(const boost::system::error_code &ec, std::size_t bytes_transferred) {
+    void Session::on_read(const boost::system::error_code &ec, std::size_t) {
         if (ec) {
             close();
             return;
@@ -93,9 +93,9 @@ namespace fstcp {
         //TODO commands handlers
 
         if (cmd == "pwd") {
-            ;
+            pwd();
         } else if (cmd == "ls") {
-            ;
+            ls();
         } else if (cmd == "cd") {
             ;
         } else if (cmd == "more") {
@@ -105,6 +105,41 @@ namespace fstcp {
         } else {
             queue_write("Hеизвестная команда\n");
         }
+    }
+
+    void Session::pwd() {
+        queue_write(current_dir_.string() + "\n");
+    }
+
+    void Session::ls() {
+        std::vector<std::string> dirs, files;
+
+        try {
+            for (const auto &entry : fs::directory_iterator(current_dir_)) {
+                std::string name = entry.path().filename().string();
+                if (entry.is_directory()) {
+                    dirs.push_back(name + "/");
+                } else {
+                    files.push_back(name);
+                }
+            }
+        } catch (const fs::filesystem_error&) {
+            queue_write("ls: не удалось прочитать директорию\n");
+            return;
+        }
+
+        std::sort(dirs.begin(), dirs.end());
+        std::sort(files.begin(), files.end());
+
+        std::string out;
+        for (const auto &d : dirs) {
+            out += d + "\n";
+        }
+        for (const auto &f : files) {
+            out += f + "\n";
+        }
+
+        queue_write(out);
     }
 
     void Session::start() {

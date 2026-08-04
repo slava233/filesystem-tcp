@@ -33,6 +33,9 @@ namespace fstcp {
         void handle_line(std::string line);
         void handle_command(const std::string &line);
 
+        void pwd();
+        void ls();
+
     public:
         explicit Session(tcp::socket socket);
 
